@@ -21,9 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\Entities\" />
     <Folder Include="Domain\Services\" />
-    <Folder Include="Infrastructure\" />
   </ItemGroup>
 
 </Project>
