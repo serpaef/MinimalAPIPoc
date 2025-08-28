@@ -1,3 +1,5 @@
+using MinimalAPIPoc.Domain.DTO;
+
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
@@ -13,9 +15,3 @@ app.MapPost("/login", (LoginDTO loginDTO) =>
 });
 
 app.Run();
-
-public class LoginDTO
-{
-    public string Username { get; set; } = default!;
-    public string Password { get; set; } = default!;
-};
