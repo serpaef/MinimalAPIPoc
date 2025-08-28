@@ -14,6 +14,18 @@ namespace MinimalAPIPoc.Infrastructure.Db
         }
         public DbSet<Admin> Admins { get; set; } = default!;
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Admin>().HasData(
+                new Admin
+                {
+                    Id = 1,
+                    Username = "admin",
+                    Password = "admin123",
+                    Role = "Admin"
+                });
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if( optionsBuilder.IsConfigured ) return;
