@@ -5,8 +5,8 @@ using MinimalAPIPoc.Domain.Entities;
 using MinimalAPIPoc.Domain.Interfaces;
 using MinimalAPIPoc.Domain.ModelViews;
 using MinimalAPIPoc.Domain.Services;
+using MinimalAPIPoc.Domain.Enums;
 using MinimalAPIPoc.Infrastructure.Db;
-using static System.Net.WebRequestMethods;
 
 #region Setup
 var builder = WebApplication.CreateBuilder(args);
@@ -33,7 +33,7 @@ app.Use(async (context, next) =>
     {
         await next();
     }
-    catch (BadHttpRequestException ex)
+    catch (BadHttpRequestException)
     {
         context.Response.StatusCode = StatusCodes.Status400BadRequest;
         context.Response.ContentType = "application/json";
@@ -55,6 +55,21 @@ app.MapGet("/", () => Results.Json(new Home())).WithTags("Home");
 #endregion
 
 #region Admin
+static ValidationErrors validateAdminDTO(AdminDTO adminDTO)
+{
+    var validationErrors = new ValidationErrors();
+    if (string.IsNullOrWhiteSpace(adminDTO.Username))
+        validationErrors.Messages.Add("Username is required.");
+    if (string.IsNullOrWhiteSpace(adminDTO.Password))
+        validationErrors.Messages.Add("Password is required.");
+    if (adminDTO.Role == Role.None)
+        validationErrors.Messages.Add("Role is required.");
+    if (adminDTO.Role != Role.Admin)
+        validationErrors.Messages.Add("Role must be Admin");
+
+    return validationErrors;
+}
+
 app.MapPost("/admin/login", ([FromBody] LoginDTO loginDTO, IAdminService adminService) =>
 {
     if(adminService.Login(loginDTO) != null)
@@ -63,6 +78,44 @@ app.MapPost("/admin/login", ([FromBody] LoginDTO loginDTO, IAdminService adminSe
     }
     
     return Results.Unauthorized();
+}).WithTags("Admin");
+
+app.MapPost("/admin", ([FromBody] AdminDTO adminDTO, IAdminService adminService) =>
+{
+    var validationErrors = validateAdminDTO(adminDTO);
+
+    if (validationErrors.Messages.Count > 0)
+        return Results.BadRequest(validationErrors);
+
+    var admin = new Admin()
+    {
+        Username = adminDTO.Username,
+        Password = adminDTO.Password,
+        Role = adminDTO.Role.ToString()
+    };
+
+    adminService.Create(admin);
+
+    return Results.Created($"/admin/{admin.Id}", admin);
+}).WithTags("Admin");
+
+app.MapGet("/admin", (HttpContext http, int? page, IAdminService adminService) =>
+{
+    var admins = adminService.GetAllAdmins(page);
+    
+    return Results.Ok(admins);
+}).WithTags("Admin");
+
+app.MapGet("/admin/{id}", ([FromRoute]int id, IAdminService adminService) =>
+{
+    var admin = adminService.GetAllAdmins(null).FirstOrDefault(a => a.Id == id);
+    
+    if(admin == null)
+    {
+        return Results.NotFound(new { message = "Admin not found" });
+    }
+
+    return Results.Ok(admin);
 }).WithTags("Admin");
 #endregion
 
