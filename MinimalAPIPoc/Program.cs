@@ -67,8 +67,29 @@ app.MapPost("/admin/login", ([FromBody] LoginDTO loginDTO, IAdminService adminSe
 #endregion
 
 #region Vehicle
+static ValidationErrors validateVehicleDTO(VehicleDTO vehicleDTO)
+{
+    var validationErrors = new ValidationErrors();
+
+    if (string.IsNullOrWhiteSpace(vehicleDTO.Name))
+        validationErrors.Messages.Add("Name is required.");
+
+    if (string.IsNullOrWhiteSpace(vehicleDTO.Make))
+        validationErrors.Messages.Add("Make is required.");
+
+    if (vehicleDTO.Year < 1886 || vehicleDTO.Year > DateTime.Now.Year + 1)
+        validationErrors.Messages.Add("Year must be between 1886 and next year.");
+
+    return validationErrors;
+}
+
 app.MapPost("/vehicles", ([FromBody] VehicleDTO vehicleDTO, IVehicleService vehicleService) =>
 {
+    var validationErrors = validateVehicleDTO(vehicleDTO);
+    
+    if(validationErrors.Messages.Count > 0)
+        return Results.BadRequest(validationErrors);
+
     var vehicle = new Vehicle
     {
         Name = vehicleDTO.Name,
@@ -96,6 +117,7 @@ app.MapGet("/vehicles/{id}", ([FromRoute]int id, IVehicleService vehicleService)
     {
         return Results.NotFound(new { message = "Vehicle not found" });
     }
+
     return Results.Ok(vehicle);
 }).WithTags("Vehicles");
 
@@ -107,6 +129,11 @@ app.MapPut("/vehicles/{id}", ([FromRoute]int id, [FromBody] VehicleDTO vehicleDT
     {
         return Results.NotFound(new { message = "Vehicle not found" });
     }
+   
+    var validationErrors = validateVehicleDTO(vehicleDTO);
+
+    if (validationErrors.Messages.Count > 0)
+        return Results.BadRequest(validationErrors);
 
     existingVehicle.Name = vehicleDTO.Name;
     existingVehicle.Make = vehicleDTO.Make;
