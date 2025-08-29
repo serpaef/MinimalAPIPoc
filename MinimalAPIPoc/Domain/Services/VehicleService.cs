@@ -25,27 +25,31 @@ namespace MinimalAPIPoc.Domain.Services
             _context.SaveChanges();
         }
 
-        public List<Vehicle> GetAllVehicles(int page = 1, string? name = null, string? make = null)
+        public List<Vehicle> GetAllVehicles(int? page = 1, string? name = null, string? make = null)
         {
             var vehicleQuery = _context.Vehicles.AsQueryable();
             
-            if(!string.IsNullOrEmpty(name))
+            if (page == null || page < 1) page = 1;
+
+            if (!string.IsNullOrEmpty(name))
             {
                 vehicleQuery = vehicleQuery.Where(v => v.Name.ToLower().Contains(name.ToLower()));
             }
 
-            if(!string.IsNullOrEmpty(make))
+            if (!string.IsNullOrEmpty(make))
             {
                 vehicleQuery = vehicleQuery.Where(v => v.Make.ToLower().Contains(make.ToLower()));
             }
 
             const int PAGE_SIZE = 10;
 
+
             vehicleQuery = vehicleQuery
-                .Skip((page - 1) * PAGE_SIZE)
+                .Skip(((int)page - 1) * PAGE_SIZE)
                 .Take(PAGE_SIZE);
 
             return vehicleQuery.ToList();
+
         }
 
         public Vehicle? GetVehicleById(int id)

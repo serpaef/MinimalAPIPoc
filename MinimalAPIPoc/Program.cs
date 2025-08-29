@@ -6,6 +6,7 @@ using MinimalAPIPoc.Domain.Interfaces;
 using MinimalAPIPoc.Domain.ModelViews;
 using MinimalAPIPoc.Domain.Services;
 using MinimalAPIPoc.Infrastructure.Db;
+using static System.Net.WebRequestMethods;
 
 #region Setup
 var builder = WebApplication.CreateBuilder(args);
@@ -25,10 +26,32 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (BadHttpRequestException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        context.Response.ContentType = "application/json";
+
+        var result = new
+        {
+            message = "Bad Request",
+        };
+
+        await context.Response.WriteAsJsonAsync(result);
+    }
+});
+
+app.UseRouting();
 #endregion
 
 #region Home
-app.MapGet("/", () => Results.Json(new Home()));
+app.MapGet("/", () => Results.Json(new Home())).WithTags("Home");
 #endregion
 
 #region Admin
@@ -40,7 +63,7 @@ app.MapPost("/admin/login", ([FromBody] LoginDTO loginDTO, IAdminService adminSe
     }
     
     return Results.Unauthorized();
-});
+}).WithTags("Admin");
 #endregion
 
 #region Vehicle
@@ -56,7 +79,25 @@ app.MapPost("/vehicles", ([FromBody] VehicleDTO vehicleDTO, IVehicleService vehi
     vehicleService.CreateVehicle(vehicle);
 
     return Results.Created($"/vehicles/{vehicle.Id}", vehicle);
-});
+}).WithTags("Vehicles");
+
+app.MapGet("/vehicles", (HttpContext http, int? page, string? name, string? make, IVehicleService vehicleService) =>
+{
+    var vehicles = vehicleService.GetAllVehicles(page, name, make);
+    
+    return Results.Ok(vehicles);
+}).WithTags("Vehicles");
+
+app.MapGet("/vehicles/{id}", ([FromRoute]int id, IVehicleService vehicleService) =>
+{
+    var vehicle = vehicleService.GetVehicleById(id);
+    
+    if(vehicle == null)
+    {
+        return Results.NotFound(new { message = "Vehicle not found" });
+    }
+    return Results.Ok(vehicle);
+}).WithTags("Vehicles");
 #endregion
 
 #region App
