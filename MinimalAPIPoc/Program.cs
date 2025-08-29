@@ -96,14 +96,33 @@ app.MapPost("/admin", ([FromBody] AdminDTO adminDTO, IAdminService adminService)
 
     adminService.Create(admin);
 
-    return Results.Created($"/admin/{admin.Id}", admin);
+    var adminModelView = new AdminModelView
+    {
+        Id = admin.Id,
+        Username = admin.Username,
+        Role = admin.Role
+    };
+
+    return Results.Created($"/admin/{adminModelView.Id}", adminModelView);
 }).WithTags("Admin");
 
 app.MapGet("/admin", (HttpContext http, int? page, IAdminService adminService) =>
 {
     var admins = adminService.GetAllAdmins(page);
-    
-    return Results.Ok(admins);
+
+    var adminViews = new List<AdminModelView>();
+
+    foreach (var admin in admins)
+    {
+        adminViews.Add(new AdminModelView
+        {
+            Id = admin.Id,
+            Username = admin.Username,
+            Role = admin.Role
+        });
+    }
+
+    return Results.Ok(adminViews);
 }).WithTags("Admin");
 
 app.MapGet("/admin/{id}", ([FromRoute]int id, IAdminService adminService) =>
@@ -115,7 +134,12 @@ app.MapGet("/admin/{id}", ([FromRoute]int id, IAdminService adminService) =>
         return Results.NotFound(new { message = "Admin not found" });
     }
 
-    return Results.Ok(admin);
+    return Results.Ok(new AdminModelView()
+    {
+        Id = admin.Id,
+        Username = admin.Username,
+        Role = admin.Role
+    });
 }).WithTags("Admin");
 #endregion
 
