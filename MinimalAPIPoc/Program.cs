@@ -1,8 +1,13 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MinimalAPIPoc.Domain.DTO;
+using MinimalAPIPoc.Domain.Interfaces;
+using MinimalAPIPoc.Domain.Services;
 using MinimalAPIPoc.Infrastructure.Db;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -16,12 +21,13 @@ var app = builder.Build();
 
 app.MapGet("/", () => "Entrypoint");
 
-app.MapPost("/login", (LoginDTO loginDTO) =>
+app.MapPost("/login", ([FromBody] LoginDTO loginDTO, IAdminService adminService) =>
 {
-    if (loginDTO.Username == "adm" && loginDTO.Password == "pwd")
+    if(adminService.Login(loginDTO) != null)
     {
-        return Results.Ok("Welcome");
+        return Results.Ok("Login successful");
     }
+    
     return Results.Unauthorized();
 });
 
