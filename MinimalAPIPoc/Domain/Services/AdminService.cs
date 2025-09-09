@@ -42,5 +42,10 @@ namespace MinimalAPIPoc.Domain.Services
 
             return admins.ToList();
         }
+
+        public Admin? GetByUsername(string username)
+        {
+            return _db.Admins.FirstOrDefault(a => a.Username == username);
+        }
     }
 }

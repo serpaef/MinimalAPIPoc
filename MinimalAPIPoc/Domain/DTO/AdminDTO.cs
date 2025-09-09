@@ -6,6 +6,6 @@ namespace MinimalAPIPoc.Domain.DTO
     {
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public Role Role { get; set; } = Role.None;
+        public string Role { get; set; } = Enums.Role.None.ToString();
     }
 }

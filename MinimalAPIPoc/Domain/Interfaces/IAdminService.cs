@@ -8,5 +8,6 @@ namespace MinimalAPIPoc.Domain.Interfaces
         Admin Login(LoginDTO loginDTO);
         Admin Create(Admin admin);
         List<Admin> GetAllAdmins(int? page);
+        Admin? GetByUsername(string username);
     }
 }
