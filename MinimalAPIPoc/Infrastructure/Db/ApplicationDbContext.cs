@@ -1,19 +1,21 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MinimalAPIPoc.Domain.Entities;
 
 namespace MinimalAPIPoc.Infrastructure.Db
 {
     public class ApplicationDbContext : DbContext
     {
+        private readonly IConfiguration? _configuration;
 
-        private readonly IConfiguration _configuration;
-
-        public ApplicationDbContext(IConfiguration configuration)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IConfiguration configuration)
+        : base(options)
         {
             _configuration = configuration;
         }
-        public DbSet<Admin> Admins { get; set; } = default!;
-        public DbSet<Vehicle> Vehicles { get; set; } = default!;
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,7 +31,7 @@ namespace MinimalAPIPoc.Infrastructure.Db
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if( optionsBuilder.IsConfigured ) return;
+            if( optionsBuilder.IsConfigured || _configuration == null) return;
 
             var connectionString = _configuration.GetConnectionString("mysql")?.ToString();
 
@@ -41,5 +43,8 @@ namespace MinimalAPIPoc.Infrastructure.Db
                 );
             }
         }
+
+        public DbSet<Admin> Admins { get; set; } = default!;
+        public DbSet<Vehicle> Vehicles { get; set; } = default!;
     }
 }
