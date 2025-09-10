@@ -21,8 +21,14 @@ namespace MinimalAPIPoc.Domain.Services
 
         public void DeleteVehicle(int id)
         {
-            _context.Vehicles.Remove(new Vehicle { Id = id });
-            _context.SaveChanges();
+            var vehicle = _context.Vehicles.Find(id);
+
+            if (vehicle is not null)
+            {
+                _context.Vehicles.Remove(vehicle);
+                _context.SaveChanges();
+                return;
+            }
         }
 
         public List<Vehicle> GetAllVehicles(int? page = 1, string? name = null, string? make = null)
